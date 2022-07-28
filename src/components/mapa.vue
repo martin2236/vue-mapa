@@ -4,21 +4,11 @@
     <div style="height: 200px; overflow: auto;">
       <p>First marker is placed at {{ withPopup.lat }}, {{ withPopup.lng }}</p>
       <p>Center is at {{ currentCenter }} and the zoom is: {{ currentZoom }}</p>
-      <p>El margen de error es de {{ margen }} metros</p>
       <button @click="showLongText">
         Toggle long popup
       </button>
       <button @click="showMap = !showMap">
         Toggle map
-      </button>
-      <button @click="marcarUbicacion = !marcarUbicacion">
-        marcar ubicaciones 
-      </button>
-       <button @click="marcarPoligono = !marcarPoligono">
-        marcar poligono
-      </button>
-      <button @click="polygon.latlngs=[]">
-        borrar poligono
       </button>
     </div>
     <l-map
@@ -29,14 +19,12 @@
       style="height: 80%"
       @update:center="centerUpdate"
       @update:zoom="zoomUpdate"
-      @click="marcarUbicacion ? click($event) : nada(),marcarPoligono ? poligono($event) : nada()"
     >
-    <l-polygon :lat-lngs="polygon.latlngs" :color="polygon.color"></l-polygon>
       <l-tile-layer
         :url="url"
         :attribution="attribution"
       />
-      <l-marker v-for="(ubicacion, index) in ubicacionesSeleccionadas" :key="index" :lat-lng="ubicacion.lugar">
+      <l-marker :lat-lng="withPopup">
         <l-popup>
           <div @click="innerClick">
             I am a popup
@@ -48,84 +36,54 @@
           </div>
         </l-popup>
       </l-marker>
-      
+      <l-marker :lat-lng="withTooltip">
+        <l-tooltip :options="{ permanent: true, interactive: true }">
+          <div @click="innerClick">
+            I am a tooltip
+            <p v-show="showParagraph">
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque
+              sed pretium nisl, ut sagittis sapien. Sed vel sollicitudin nisi.
+              Donec finibus semper metus id malesuada.
+            </p>
+          </div>
+        </l-tooltip>
+      </l-marker>
     </l-map>
   </div>
 </template>
 
 <script>
 import { latLng } from "leaflet";
-import { LMap, LTileLayer, LMarker, LPopup, LPolygon } from "vue2-leaflet";
+import { LMap, LTileLayer, LMarker, LPopup, LTooltip } from "vue2-leaflet";
 
 export default {
-  name: "Example",
+  name: "mapa",
   components: {
     LMap,
     LTileLayer,
     LMarker,
     LPopup,
-     LPolygon
+    LTooltip
   },
   data() {
     return {
       zoom: 13,
-      center: latLng(-36.735349, -56.6895547),
-      margen:'',
+      center: latLng(47.41322, -1.219482),
       url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
       attribution:
         '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
-      withPopup: latLng(-36.735349, -56.6895547),
+      withPopup: latLng(47.41322, -1.219482),
       withTooltip: latLng(47.41422, -1.250482),
       currentZoom: 11.5,
       currentCenter: latLng(47.41322, -1.219482),
       showParagraph: false,
-      ubicacionesSeleccionadas:[],
-      marcarUbicacion:false,
-      marcarPoligono:false,
-      coordOptions:{
-        enableHighAccuracy: true,
-        timeout: 5000,
-        maximumAge: 0
-        },
       mapOptions: {
         zoomSnap: 0.5
-      },
-       polygon: {
-        latlngs: [],
-        color: 'green'
       },
       showMap: true
     };
   },
-  created(){
-      this.getCorrds();
-  },
   methods: {
-    click(e){
-        var coord = e.latlng;
-        this.ubicacionesSeleccionadas.push({lugar:latLng(coord.lat, coord.lng),titulo:'', descripcion:''})
-        console.log(this.ubicacionesSeleccionadas)
-  },
-  poligono(e){
-        var coord = e.latlng;
-        this.polygon.latlngs.push([coord.lat, coord.lng])
-        console.log(this.ubicacionesSeleccionadas)
-  },
-  nada(){
-      console.log('nada')
-  },
-    getCorrds(){
-    navigator.geolocation.getCurrentPosition(this.success, this.error, this.coordOptions)
-},
-success(pos) {
-  const crd = pos.coords;
-  this.margen = crd.accuracy
-  this.center = latLng(crd.latitude, crd.longitude)
-
-},
- error(err) {
-  console.warn(`ERROR(${err.code}): ${err.message}`);
-},
     zoomUpdate(zoom) {
       this.currentZoom = zoom;
     },
