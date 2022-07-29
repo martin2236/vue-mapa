@@ -56,7 +56,7 @@
       <l-marker v-for="(ubicacion, index) in ubicacionesSeleccionadas" :key="index" :lat-lng="ubicacion.lugar">
         <l-popup>
           <div @click="innerClick">
-            I am a popup
+            {{ubicacion.nombre}}
             <p v-show="showParagraph">
               Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque
               sed pretium nisl, ut sagittis sapien. Sed vel sollicitudin nisi.
@@ -136,7 +136,6 @@ export default {
         const ws = wb.Sheets[wsname]
         /* Convert array of arrays */
         let rowObject = XLSX.utils.sheet_to_row_object_array(ws)
-       
         /* Update state */
         this.data = rowObject
         this.getDirecciones()
@@ -144,8 +143,24 @@ export default {
       reader.readAsBinaryString(file)
     },
     getDirecciones(){
-     let direcciones = this.data.map(item=>{return {alumno:item.__EMPTY +' '+ item.__EMPTY_1,lugar:item.__EMPTY_4 +' '+ item.__EMPTY_5+' '+'Argentina'}})
-     console.log(direcciones)
+     let direcciones = this.data.map(item=>{return {alumno:item.__EMPTY +' '+ item.__EMPTY_1,lugar:item.__EMPTY_4 +' '+ item.__EMPTY_5+' '+'La Costa'+' '+'Argentina'}})
+     let listaFiltrada = direcciones.slice(1)
+     listaFiltrada.forEach(item => {
+       fetch(
+        `http://api.positionstack.com/v1/forward?access_key=30dc4943e77b8d3c2d24f20b135e403e&query=${item.lugar}`
+      )
+        .then((res) => {
+          return res.json();
+        })
+        .then((data) => {
+          if(data.data[0].latitude != undefined){
+            console.log(item.alumno)
+            console.log('latitud',data.data[0].latitude, 'longitud', data.data[0].longitude);
+             this.ubicacionesSeleccionadas.push({lugar: latLng(data.data[0].latitude, data.data[0].longitude),nombre:item.alumno});
+          }
+         
+        });
+     })
     },
     buscar() {
       console.log(this.busqueda)
